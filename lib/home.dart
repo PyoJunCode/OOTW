@@ -14,6 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'ootw.dart';
 import 'profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -529,7 +530,9 @@ class _HomePageState extends State<HomePage> {
                     IconButton(
                       icon: Image.asset('images/outfit_button.png'),
                       iconSize: 9,
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ootwPage(weather)));
+                      },
                     ),
                   ],
                 )
