@@ -4,8 +4,8 @@ Outfit Of Today's Weather(OOTW) Application
 
 날씨를 알려주고 기온/장소 에 맞는 옷차림을 추천해주는 어플리케이션
 
-[prototype figma link](https://www.figma.com/file/ZhkMhj4niGnZ3gAVbZAN29/ootd%EC%B6%94%EC%B2%9CApp?node-id=0%3A1)
-[description](https://github.com/PyoJunCode/OOTW/blob/master/mobile.pdf)
+[prototype figma link](https://www.figma.com/file/ZhkMhj4niGnZ3gAVbZAN29/ootd%EC%B6%94%EC%B2%9CApp?node-id=0%3A1) <br>
+[description](https://github.com/PyoJunCode/OOTW/blob/master/mobile.pdf) <br>
 [youtube](https://youtu.be/iu5lL2DdPg8)
 
 <br>
