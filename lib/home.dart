@@ -14,6 +14,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'favorite.dart';
 import 'ootw.dart';
 import 'profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,12 +24,13 @@ import 'dart:io';
 //import 'package:uuid/uuid.dart';
 //import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:async';
+import 'mlkit.dart';
 import 'package:weather/weather_library.dart';
 
 class HomePage extends StatefulWidget {
   final FirebaseUser user;
-  int type;
-  HomePage(this.user, this.type);
+
+  HomePage(this.user);
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -41,7 +43,7 @@ class _HomePageState extends State<HomePage> {
   PageController pageController;
   int currentPage = 0;
 
-  String key = '35557bb866e1fe9ca193680d9dd373de';
+  String key = '856822fd8e22db5e1ba48c0e7d69844a';
   WeatherStation ws;
   double lat =36.103315, lon=129.388426; //한동대 경도,위도
 
@@ -78,11 +80,14 @@ class _HomePageState extends State<HomePage> {
   double rainLastHour;
   double snowLastHour;
 
+  String gender;
+
   @override
   void initState(){
     super.initState();
     ws = new WeatherStation(key);
     pageController = PageController();
+    loadOotw();
   }
 
   void dispose(){
@@ -121,15 +126,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         elevation: 0.0,
         backgroundColor: Color(0xFFD2F0F7),
-        leading: IconButton(
-          icon: Icon(
-            Icons.menu,
-            color: Color(0xffBBBBBB),
-            semanticLabel: 'menu',
-          ),
-          onPressed: () {
-          },
-        ),
+
         actions: <Widget>[
           IconButton(
             icon: Icon(
@@ -138,10 +135,159 @@ class _HomePageState extends State<HomePage> {
               semanticLabel: 'profile',
             ),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(widget.user, widget.type)));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(widget.user)));
             },
           ),
         ],
+      ),
+      drawer:  Drawer( //automatically menu icon appear
+
+        child: ListView(
+
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            Container(
+              height: MediaQuery.of(context).size.height * 0.37,
+              child: DrawerHeader(
+                child:
+                FutureBuilder(
+                future: queryWeather(),
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasData == false) {
+                    return CircularProgressIndicator();
+                  }
+                  return
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          SizedBox(height: 35,),
+                          Text(
+                            DateFormat('MM.dd EEE').format(weather.date),
+                            style: TextStyle(fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey),
+                          ),
+                          Text(
+                            country, style: TextStyle(fontSize: 23,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black),
+                          ),
+                          SizedBox(height: 20,),
+                          Row(
+                            children: <Widget>[
+                              Text('기온  '),
+                              Text(weather.temperature.celsius.toStringAsFixed(2),
+                                style: TextStyle(fontSize: 18,
+                                    fontWeight: FontWeight.bold),),
+                              SizedBox(width: 5,),
+                              Column(
+                                children: <Widget>[
+                                  Text('o', style: TextStyle(fontSize: 15,
+                                      fontWeight: FontWeight.bold),),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          Row(
+                            children: <Widget>[
+                              Text('습도  '),
+                              Text(humidity.toStringAsFixed(2),
+                                style: TextStyle(fontWeight: FontWeight.bold,
+                                    fontSize: 18),),
+                            ],
+                          ),
+
+                          Row(
+                            children: <Widget>[
+                              Text('운량  '),
+                              Text(cloudiness.toStringAsFixed(2),
+                                style: TextStyle(fontWeight: FontWeight.bold,
+                                    fontSize: 18),),
+                            ],
+                          ),
+                        ],
+                      ),
+                      SizedBox(width: 15,),
+                      Expanded(
+                        child: SizedBox(
+                          width: 100, child: icon(weather.weatherMain,),),
+                      )
+                    ],
+                  );
+                }
+                ),
+
+
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('images/clear_bg.png'),fit: BoxFit.cover
+                  ),
+
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.cloud),
+              title: Text('날씨', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.location_on),
+              title: Text('지역설정', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+
+                Navigator.pushNamed(context, '/webpage');
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.favorite),
+              title: Text('찜', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+
+                Navigator.push(context, MaterialPageRoute(builder: (context) => FavoritePage(weather,widget.user)));
+
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.accessibility),
+              title: Text('날씨에 따른 옷추천', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ootwPage(weather,widget.user)));
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('장소에 따른 옷추천', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+
+                Navigator.push(context, MaterialPageRoute(builder: (context) => mlPage(weather,widget.user, gender)));
+              },
+            ),
+
+            ListTile(
+              leading: Icon(Icons.person),
+              title: Text('내 정보', style: TextStyle(fontWeight: FontWeight.bold),),
+              onTap: () {
+
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(widget.user)));
+              },
+            ),
+
+          ],
+        ),
       ),
       resizeToAvoidBottomInset: false,
     );
@@ -360,7 +506,7 @@ class _HomePageState extends State<HomePage> {
                 Align(
                   alignment: Alignment.topLeft,
                   child: Container(
-                    margin: EdgeInsets.only(top: 28, left: 25),
+                    margin: EdgeInsets.only(top: 23, left: 25),
                     child: FutureBuilder(//5일날짜
                         future: queryForecast(),
                         builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -374,16 +520,16 @@ class _HomePageState extends State<HomePage> {
                               children: <Widget>[
                                 Text(DateFormat('MM.dd EEE').format(now), style: TextStyle(fontSize: 17, color: Colors.grey),),
                                 SizedBox(height: 7,),
-                                Text(kor_descrip, style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),),
+                                Text(kor_descrip, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
                                 //Text('햇살이 따뜻한 맑은 날', style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),),
                                 Container(
-                                  margin: EdgeInsets.only(top: 17, left: 8),
+                                  margin: EdgeInsets.only(top: 20, left: 8),
                                   child: Column(
                                     children: <Widget>[
                                       Row(//내일
                                         children: <Widget>[
                                           SizedBox(
-                                            width: 40,
+                                            width: 35,
                                             child: icon(snapshot.data[5].weatherMain.toString()),
                                           ),
                                           SizedBox(width: 10,),
@@ -406,11 +552,11 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 15,),
+                                      SizedBox(height: 12,),
                                       Row(
                                         children: <Widget>[
                                           SizedBox(
-                                            width: 40,
+                                            width: 35,
                                             child: icon(snapshot.data[13].weatherMain.toString()),
                                           ),
                                           SizedBox(width: 10,),
@@ -433,11 +579,11 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 15,),
+                                      SizedBox(height: 12,),
                                       Row(
                                         children: <Widget>[
                                           SizedBox(
-                                            width: 40,
+                                            width: 35,
                                             child: icon(snapshot.data[21].weatherMain.toString()),
                                           ),
                                           SizedBox(width: 10,),
@@ -460,11 +606,11 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 15,),
+                                      SizedBox(height: 12,),
                                       Row(
                                         children: <Widget>[
                                           SizedBox(
-                                            width: 40,
+                                            width: 35,
                                             child: icon(snapshot.data[29].weatherMain.toString()),
                                           ),
                                           SizedBox(width: 10,),
@@ -487,11 +633,11 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 15,),
+                                      SizedBox(height: 13,),
                                       Row(
                                         children: <Widget>[
                                           SizedBox(
-                                            width: 40,
+                                            width: 35,
                                             child: icon(snapshot.data[37].weatherMain.toString()),
                                           ),
                                           SizedBox(width: 10,),
@@ -524,24 +670,37 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                SizedBox(height: 26,),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    IconButton(
-                      icon: Image.asset('images/outfit_button.png'),
-                      iconSize: 9,
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => ootwPage(weather)));
-                      },
-                    ),
+                    FlatButton(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          side: BorderSide(color: Color(0xFF76AEC7),)
+                      ),
+                      child: Text('오늘 날씨에 딱 맞는 패션은?', style: TextStyle(color: Color(0xFF76AEC7)),), onPressed: (){
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ootwPage(weather,widget.user),  fullscreenDialog: true));
+                    },),
                   ],
-                )
+                ),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  loadOotw() {
+    Firestore.instance.collection('users').document(widget.user.uid)
+        .get()
+        .then((docSnap) {
+      gender = docSnap['gender'];
+      print(gender);
+      assert(gender != null);
+    });
   }
 
   String translate_kor(String descrip){

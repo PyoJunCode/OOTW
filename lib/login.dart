@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ootw/splash.dart';
 import 'home.dart';
+import 'gender.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -18,25 +21,92 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.symmetric(horizontal: 24.0),
+        child: Column(
           children: <Widget>[
-            SizedBox(height: 180.0),
-            Column(
-              children: <Widget>[
-                //Image.asset('assets/diamond.png'),
-                SizedBox(height: 16.0),
-                Text('OOTW'),
-              ],
+            SizedBox(
+              height: 460,
+              child: Stack(
+                  fit: StackFit.expand,
+                  children: <Widget>[
+                    Container(
+                      decoration: BoxDecoration(color: Color(0xFF76AEC7)),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Text('오늘 날씨에 딱 맞는 ',
+                              style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 20
+                              ),
+                            ),
+                            Text('그 패션',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 20,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            SizedBox(
+                              child: Stack(
+                                children: <Widget>[
+                                  SizedBox(height:100,child: Image.asset('images/clouds.png',)),
+                                  Column(
+                                    children: <Widget>[
+                                      SizedBox(height: 50,),
+                                      Row(
+                                        children: <Widget>[
+                                          SizedBox(width: 63,),
+                                          InkWell(
+                                            child: Text(
+                                              'OOTW',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 45,
+                                                  fontWeight: FontWeight.bold
+                                              ),
+                                            ),
+                                            onTap: (){
+                                              Navigator.push(context, MaterialPageRoute(builder: (context) => SplashScreen()));
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10,),
+                        Text(
+                          'Outfit Of The Weather',
+                          style:TextStyle(
+                              color: Colors.white70,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ],
+                    ),
+                  ]
+              ),
             ),
-            SizedBox(height: 120.0),
-            // TODO: Wrap Username with AccentColorOverride (103)
-            // TODO: Remove filled: true values (103)
+            SizedBox(height: 20.0),
             _GoogleSignInSection(),
-            // TODO: Wrap Password with AccentColorOverride (103)
             _AnonymouslySignInSection(),
             SizedBox(height: 12.0),
-            _SignOutSection(),
+            //_SignOutSection(),
           ],
         ),
       ),
@@ -90,12 +160,52 @@ class _AnonymouslySignInSectionState extends State<_AnonymouslySignInSection> {
       children: <Widget>[
         Container(
           alignment: Alignment.center,
-          child: RaisedButton(
+          child:
+          SizedBox(
+            width: 330,
+            child: Container(
+              height: 50.0,
+              child: GestureDetector(
+                onTap: () async{
+                  _signInAnonymously();
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Color(0xFF76AEC7),
+                      style: BorderStyle.solid,
+                      width: 1.0,
+                    ),
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Center(
+                        child: Text(
+                          "로그인 없이 입장",
+                          style: TextStyle(
+                            color: Color(0xFF76AEC7),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            //letterSpacing: 1,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+              /*
+          RaisedButton(
             onPressed: () async {
               _signInAnonymously();
             },
             child: const Text('Sign in anonymously'),
-          ),
+          ),*/
         ),
       ],
     );
@@ -131,7 +241,24 @@ class _AnonymouslySignInSectionState extends State<_AnonymouslySignInSection> {
         _success = false;
       }
     });
-    Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user, 0)));
+
+    var document = await Firestore.instance.document('users/$_userID').get().then((doc) {
+      if (doc.exists) {
+        print(_userID);
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => HomePage(user)));
+      }
+      else {
+        print('new user');
+        Firestore.instance.collection('users').document(user.uid).setData({
+          'name': currentUser.displayName == null ? 'Anonymous' : user
+              .displayName,
+          'gender' : null,
+          'favorite' : List<String>()
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (context) => GenderPage(user)));
+      }
+    });
   }
 }
 
@@ -150,7 +277,41 @@ class _GoogleSignInSectionState extends State<_GoogleSignInSection> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           alignment: Alignment.center,
-          child: RaisedButton(
+          child:
+          SizedBox(
+            width: 330,
+            child: Container(
+              height: 50.0,
+              child: GestureDetector(
+                onTap: () async{
+                  _signInWithGoogle();
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFF76AEC7),
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Center(
+                        child: Text(
+                          "Google 로그인",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            //letterSpacing: 1,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          /*RaisedButton(
             onPressed: () async {
               _signInWithGoogle();
               if(_success != null){
@@ -158,7 +319,7 @@ class _GoogleSignInSectionState extends State<_GoogleSignInSection> {
               }
             },
             child: const Text('Sign in with Google'),
-          ),
+          ),*/
         ),
       ],
     );
@@ -190,7 +351,24 @@ class _GoogleSignInSectionState extends State<_GoogleSignInSection> {
         _success = false;
       }
     });
-    Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage(user, 1)));
+
+    var document = await Firestore.instance.document('users/$_userID').get().then((doc) {
+      if (doc.exists) {
+        print(_userID);
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => HomePage(user)));
+      }
+      else {
+        print('new user');
+        Firestore.instance.collection('users').document(user.uid).setData({
+          'name': currentUser.displayName == null ? 'Anonymous' : user
+              .displayName,
+          'gender' : null,
+          'favorite' : List<String>()
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (context) => GenderPage(user)));
+      }
+    });
+
   }
 }
-// TODO: Add AccentColorOverride (103)

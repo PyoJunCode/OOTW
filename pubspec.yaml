@@ -31,6 +31,9 @@ dependencies:
   carousel_slider: ^2.1.0
   google_sign_in: ^4.4.1
   intl: ^0.16.0
+  webview_flutter: ^0.3.22+1
+  firebase_ml_vision: ^0.9.4
+  image_picker: ^0.6.7+1
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +66,13 @@ flutter:
     - images/short.png
     - images/tshirt.png
     - images/shoes.png
+    - images/outfitButton.png
+    - images/boy_selected.png
+    - images/boy.png
+    - images/girl_selected.png
+    - images/girl.png
+    - images/yellow_button.png
+    - images/change_place.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
